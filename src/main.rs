@@ -40,9 +40,7 @@ impl Network {
 
     fn predict(&self, inputs: &Vec<f64>) -> Vec<f64> {
         let mut outputs = Vec::new();
-        println!(" iterating over {} neurons", self.neurons.len());
         for neuron in self.neurons.iter() {
-     
             outputs.push(neuron.predict(inputs));
         }
         outputs
@@ -72,16 +70,20 @@ impl Network {
 }
 
 
+
 fn main() {
+
     // create network with 3 neurons
+    // let mut network = Network::new(vec![
+    //     Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
+    //     Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
+    //     Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
+    // ]);
+
     let mut network = Network::new(vec![
-        Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
-        Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
         Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
     ]);
 
-
-    // train network
     network.train(&vec![vec![0.0, 0.0, 0.0]], &vec![vec![0.0]], 0.1);
     network.train(&vec![vec![1.0, 0.0, 0.0]], &vec![vec![0.0]], 0.1);
     network.train(&vec![vec![0.0, 1.0, 0.0]], &vec![vec![1.0]], 0.1);
@@ -91,7 +93,6 @@ fn main() {
     network.train(&vec![vec![0.0, 1.0, 1.0]], &vec![vec![1.0]], 0.1);
     network.train(&vec![vec![1.0, 1.0, 1.0]], &vec![vec![1.0]], 0.1);
 
-
     println!("**************** OUTPUT ****************");
 
     println!("{:?}", network.predict(&vec![1.0, 0.0, 0.0])); // 0
@@ -100,6 +101,6 @@ fn main() {
     println!("{:?}", network.predict(&vec![1.0, 1.0, 0.0])); // 1
     println!("{:?}", network.predict(&vec![1.0, 0.0, 1.0])); // 0
     println!("{:?}", network.predict(&vec![0.0, 1.0, 1.0])); // 1
-    println!("{:?}", network.predict(&vec![1.0, 1.0, 1.0])); // 1
+    println!("{:?}", network.predict(&vec![1.0, 1.0, 1.0])); // 1  
 
 }
