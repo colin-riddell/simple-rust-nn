@@ -67,20 +67,9 @@ impl Network {
         rand::random::<f64>()
     }
 
-    // fn new_predict(&mut self, inputs: &Vec<Vec<f64>>, outputs: &Vec<Vec<f64>>, rate: f64){
-    //     let mut outputs = Vec::new();
-
-    //     for (input, output) in inputs.iter().zip(outputs.iter()) {
-    //         for neuron in self.neurons.iter() {
-    //             let mut out = neuron.predict(input);
-    //             outputs.push(out);
-    //         }
-    //     }
-
-    // }
 
     fn train(&mut self, inputs: &Vec<Vec<f64>>, outputs: &Vec<Vec<f64>>, rate: f64) {
-        // for _ in 0..10000 {
+        // for _ in 0..1000 {
             for (input, output) in inputs.iter().zip(outputs.iter()) {
                 let mut outputs = self.predict(input);
                 for (output, target) in outputs.iter_mut().zip(output.iter()) {
@@ -110,16 +99,16 @@ fn get_files(dir: &str) -> Vec<String> {
     files
 }
 
-    // flatten 2d vec to 1d vec
-    fn flatten(inputs: &Vec<Vec<f64>>) -> Vec<f64> {
-        let mut output = Vec::new();
-        for row in inputs {
-            for col in row {
-                output.push(*col);
-            }
+// flatten 2d vec to 1d vec
+fn flatten(inputs: &Vec<Vec<f64>>) -> Vec<f64> {
+    let mut output = Vec::new();
+    for row in inputs {
+        for col in row {
+            output.push(*col);
         }
-        output
     }
+    output
+}
 
 // load image file from disk
 fn load_image(path: &str) -> Vec<Vec<f64>> {
@@ -162,14 +151,23 @@ fn train_on_zeros_and_ones() {
     let one_files = get_files("./mnist_png/training/1");
     let number_of_files = one_files.len();
 
-    // loop over all files
-    for (index, file) in one_files.iter().enumerate() {
-         // load one into memory
-        let pixels = load_image(&file);
-        print_percent_complete(number_of_files, index);
+    one_files.iter()
+        .enumerate()
+        .for_each(|(index, file)| {
+            print_percent_complete(number_of_files, index);
+            let inputs = load_image(file);
+            let outputs = vec![vec![1.0; 10]];
+            network.train(&inputs, &outputs, 0.1);
+        });
 
-        network.train(&pixels, &vec![vec![1.0]], 0.1);
-    }
+    // // loop over all files
+    // for (index, file) in one_files.iter().enumerate() {
+    //      // load one into memory
+    //     let pixels = load_image(&file);
+    //     print_percent_complete(number_of_files, index);
+
+    //     network.train(&pixels, &vec![vec![1.0]], 0.1);
+    // }
 
     // get all files for 0's
     let zero_files = get_files("./mnist_png/training/0");
@@ -192,7 +190,7 @@ fn train_on_zeros_and_ones() {
 
         let flattened = flatten(&pixels);
 
-        println!("{:?}",network.predict(&flattened)); // should be a 0 ish so 0.99, 0.01
+        println!("{:?}",network.predict_2d(&pixels)); // should be a 0 ish so 0.99, 0.01
     }
 
     let one_test_files = get_files("./mnist_png/testing/1");
@@ -203,7 +201,7 @@ fn train_on_zeros_and_ones() {
 
         let flattened = flatten(&pixels);
 
-        println!("{:?}",network.predict(&flattened)); // should be a 0 ish so 0.99, 0.01
+        println!("{:?}",network.predict_2d(&pixels)); // should be a 0 ish so 0.99, 0.01
     }
  
 
@@ -216,6 +214,7 @@ fn just_one_file(){
     let just_one = zero_files[0].clone();
     println!("{} size of one image", just_one.len());
     let pixels = load_image(&just_one);
+    println!("{:?}",pixels);
 }
 
 fn train_simple_problem(){
@@ -246,6 +245,7 @@ fn train_simple_problem(){
 fn main() {
     train_on_zeros_and_ones();
     // train_simple_problem();
+    // just_one_file();
    
    
 
