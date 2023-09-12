@@ -77,32 +77,37 @@ impl Network {
         self.output_layer.predict(&hidden_outputs)
     }
 
-    // A simple training function with backpropagation omitted for simplicity ?? is this bp ?
-
     fn train(&mut self, inputs: &Vec<Vec<f64>>, outputs: &Vec<Vec<f64>>, rate: f64, epochs: usize) {
         for _ in 0..epochs {
             for (input, output) in inputs.iter().zip(outputs.iter()) {
-                // Forward pass
                 let hidden_output = self.hidden_layer.predict(input);
                 let mut output_preds = self.output_layer.predict(&hidden_output);
-    
+                
                 // Compute output layer error
-                for (output_pred, target) in output_preds.iter_mut().zip(output.iter()) {
-                    *output_pred = *output_pred * (1.0 - *output_pred) * (*target - *output_pred);
+                let mut output_errors: Vec<f64> = Vec::new();
+                for (output_pred, target) in output_preds.iter().zip(output.iter()) {
+                    output_errors.push(*output_pred * (1.0 - *output_pred) * (*target - *output_pred));
                 }
-    
+                
                 // Update output layer weights and biases
-                for (neuron, output_pred) in self.output_layer.neurons.iter_mut().zip(output_preds.iter()) {
+                for (neuron, output_error) in self.output_layer.neurons.iter_mut().zip(output_errors.iter()) {
                     for (weight, hidden_val) in neuron.weights.iter_mut().zip(hidden_output.iter()) {
-                        *weight += rate * hidden_val * *output_pred;
+                        *weight += rate * hidden_val * *output_error;
                     }
-                    neuron.bias += rate * *output_pred;
+                    neuron.bias += rate * *output_error;
                 }
+                
     
                 // Compute hidden layer error and update weights and biases
-                // Note: This is a very simplified form and does not follow backpropagation algorithm rigorously
                 for (neuron, hidden_val) in self.hidden_layer.neurons.iter_mut().zip(hidden_output.iter()) {
-                    let error = hidden_val * (1.0 - hidden_val) * output_preds[0];  // Assuming single output neuron
+                    // For each hidden neuron, sum up the contributions from all output neurons
+                    let mut error = 0.0;
+                    for (output_error, output_neuron) in output_errors.iter().zip(self.output_layer.neurons.iter()) {
+                        error += output_neuron.weights[0] * output_error;  // Assumes uniform length of neuron.weights
+                    }
+                    error *= hidden_val * (1.0 - hidden_val);
+
+                    // Update the weights and bias for the hidden layer neuron
                     for (weight, input_val) in neuron.weights.iter_mut().zip(input.iter()) {
                         *weight += rate * input_val * error;
                     }
@@ -150,6 +155,7 @@ fn load_image(path: &str) -> Vec<Vec<f64>> {
     }
     pixels
 }
+
 // get list of files in directory
 fn get_files(dir: &str) -> Vec<String> {
     let mut files = Vec::new();
@@ -162,6 +168,7 @@ fn get_files(dir: &str) -> Vec<String> {
     }
     files
 }
+
 fn train_on_zeros_and_ones() {
     let mut initial_weights: Vec<f64> = vec![];
     for _ in 0..784 {
