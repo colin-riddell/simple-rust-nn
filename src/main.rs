@@ -2,6 +2,7 @@ use rand::*;
 use std::io::Write;
 use std::fs::*;
 use image::*;
+use serde::{Serialize, Deserialize};
 
 
 // sigmoid function
@@ -9,7 +10,7 @@ fn sigmoid(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Neuron {
     weights: Vec<f64>,
     bias: f64,
@@ -32,7 +33,7 @@ impl Neuron {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Layer {
     neurons: Vec<Neuron>,
 }
@@ -48,7 +49,7 @@ impl Layer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Network {
     hidden_layer: Layer,
     output_layer: Layer,
@@ -61,14 +62,15 @@ impl Network {
         Network { hidden_layer, output_layer }
     }
 
-        //to_string
-    // fn to_string(&self) -> String {
-    //     let mut s = String::new();
-    //     for neuron in self.neurons.iter() {
-    //         s.push_str(&format!("{:?}\n", neuron));
-    //     }
-    //     s
-    // }
+    fn to_string(&self) -> String {
+        // Convert the Network instance to a JSON string
+        serde_json::to_string(self).expect("Failed to serialize to string")
+    }
+
+    fn from_string(s: &str) -> Network {
+        // Convert a JSON string to a Network instance
+        serde_json::from_str(s).expect("Failed to deserialize from string")
+    }
 
     fn predict(&self, inputs: &Vec<f64>) -> Vec<f64> {
         let hidden_outputs = self.hidden_layer.predict(inputs);
@@ -161,24 +163,13 @@ fn get_files(dir: &str) -> Vec<String> {
     files
 }
 fn train_on_zeros_and_ones() {
-    // Create network with one neuron with 28*28 inputs and one output
     let mut initial_weights: Vec<f64> = vec![];
     for _ in 0..784 {
         initial_weights.push(random_f64()); // Use a random value instead of 0
     }
 
-    let mut network = Network::new(784, 10, 2);  // 3 inputs, 2 hidden neurons, 1 output neuron
+    let mut network = Network::new(784, 10, 2);
 
-    // let mut network = Network::new(vec![
-    //     Neuron::new(initial_weights, random_f64()), // Randomly initialize the bias as well
-    //     // Neuron::new(vec![0.0; 784], 0.0)
-    // ]);
-
-
-    // println!("{:?}", network.neurons);
-    //copy network to file
-    // let mut file = File::create("./before_training.txt").unwrap();
-    // file.write_all(network.to_string().as_bytes()).unwrap();
 
     // get all files for 1's
     let one_files = get_files("./mnist_png/training/1");
@@ -208,11 +199,12 @@ fn train_on_zeros_and_ones() {
         network.train(&pixels, &vec![vec![1.0, 0.0]], 0.1, 50);
     }
 
-    // println!("{:?}", network.neurons);
-    //copy network to file
+
+    //copy  trained network to file
     // let mut file = File::create("./network_after_training.txt").unwrap();
     // file.write_all(network.to_string().as_bytes()).unwrap();
-
+    let mut file = File::create("./network_after_training.json").unwrap();
+    file.write_all(network.to_string().as_bytes()).unwrap();
 
     
     // load file from  test set
@@ -229,18 +221,6 @@ fn train_on_zeros_and_ones() {
 
     let one_test_files = get_files("./mnist_png/testing/1");
 
-    // for (index, file) in one_test_files.iter().enumerate() {
-    //     println!("Predicting file {}", file);
-    //     let pixels = load_image(&file);
-
-    //     let flattened = flatten(&pixels);
-
-    //     println!("{:?}",network.predict(&flattened));
-    // }
- 
-
-
-    
 }
 
 fn train_simple_problem() {
@@ -281,10 +261,5 @@ fn train_simple_problem() {
 }
 
 fn main() {
-    // train_simple_problem();
     train_on_zeros_and_ones();
-//     Predicting file ./mnist_png/testing/1/345.png
-// [0.00000013757348994826562, 1.0]
-// Predicting file ./mnist_png/testing/1/8187.png
-// [0.00000013757351324860064, 1.0]
 }
