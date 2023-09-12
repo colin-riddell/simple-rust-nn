@@ -1,3 +1,4 @@
+use std::io::Write;
 use rand::*;
 use std::fs::*;
 use image::*;
@@ -7,6 +8,7 @@ fn sigmoid(x: f64) -> f64 {
     1.0 / (1.0 + (-x).exp())
 }
 
+#[derive(Debug)]
 struct Neuron {
     weights: Vec<f64>,
     bias: f64,
@@ -29,7 +31,7 @@ impl Neuron {
     }
 }
 
-
+#[derive(Debug)]
 struct Network {
     neurons: Vec<Neuron>,
 }
@@ -40,6 +42,14 @@ impl Network {
         Network { neurons }
     }
 
+    //to_string
+    fn to_string(&self) -> String {
+        let mut s = String::new();
+        for neuron in self.neurons.iter() {
+            s.push_str(&format!("{:?}\n", neuron));
+        }
+        s
+    }
 
 
     // predict 2d
@@ -69,20 +79,31 @@ impl Network {
 
 
     fn train(&mut self, inputs: &Vec<Vec<f64>>, outputs: &Vec<Vec<f64>>, rate: f64) {
-        // for _ in 0..1000 {
+        // println!("{:?}", inputs);
+
+        for _ in 0..500 {
             for (input, output) in inputs.iter().zip(outputs.iter()) {
+
                 let mut outputs = self.predict(input);
+                // println!("{:?}", outputs);
+
                 for (output, target) in outputs.iter_mut().zip(output.iter()) {
                     *output = *output * (1.0 - *output) * (*target - *output);
                 }
                 for (neuron, output) in self.neurons.iter_mut().zip(outputs.iter()) {
                     for (weight, input) in neuron.weights.iter_mut().zip(input.iter()) {
+                        let weight_before = *weight;
                         *weight += rate * *input * *output;
+                        
+                        let weight_after = *weight;
+                        if weight_before != weight_after {
+                            println!("Weight updated! Before: {} after: {}", weight_before, weight_after);
+                        }
                     }
                     neuron.bias += rate * *output;
                 }
             }
-        // }
+        }
     }
 }
 
@@ -100,14 +121,14 @@ fn get_files(dir: &str) -> Vec<String> {
 }
 
 // flatten 2d vec to 1d vec
-fn flatten(inputs: &Vec<Vec<f64>>) -> Vec<f64> {
+fn flatten(inputs: &Vec<Vec<f64>>) -> std::vec::Vec<f64> {
     let mut output = Vec::new();
     for row in inputs {
         for col in row {
             output.push(*col);
         }
     }
-    output
+    return output;
 }
 
 // load image file from disk
@@ -138,14 +159,29 @@ fn print_percent_complete(number_of_files: usize, index: usize){
     }
 }
 
+// random_f64
+fn random_f64() -> f64 {
+    rand::random::<f64>()
+}
+
 
 fn train_on_zeros_and_ones() {
+    // Create network with one neuron with 28*28 inputs and one output
+    let mut initial_weights: Vec<f64> = vec![];
+    for _ in 0..784 {
+        initial_weights.push(random_f64()); // Use a random value instead of 0
+    }
 
-    // create network with one neuron with 28*28 inputs and one output
     let mut network = Network::new(vec![
-        Neuron::new(vec![0.0; 784], 0.0),
+        Neuron::new(initial_weights, random_f64()), // Randomly initialize the bias as well
         // Neuron::new(vec![0.0; 784], 0.0)
     ]);
+
+
+    // println!("{:?}", network.neurons);
+    //copy network to file
+    let mut file = File::create("./before_training.txt").unwrap();
+    file.write_all(network.to_string().as_bytes()).unwrap();
 
     // get all files for 1's
     let one_files = get_files("./mnist_png/training/1");
@@ -154,20 +190,12 @@ fn train_on_zeros_and_ones() {
     one_files.iter()
         .enumerate()
         .for_each(|(index, file)| {
-            print_percent_complete(number_of_files, index);
+            // print_percent_complete(number_of_files, index);
             let inputs = load_image(file);
-            let outputs = vec![vec![1.0; 10]];
-            network.train(&inputs, &outputs, 0.1);
+            // println!("{:?}", inputs);
+            network.train(&inputs, &vec![vec![1.0]], 0.1);
         });
 
-    // // loop over all files
-    // for (index, file) in one_files.iter().enumerate() {
-    //      // load one into memory
-    //     let pixels = load_image(&file);
-    //     print_percent_complete(number_of_files, index);
-
-    //     network.train(&pixels, &vec![vec![1.0]], 0.1);
-    // }
 
     // get all files for 0's
     let zero_files = get_files("./mnist_png/training/0");
@@ -176,12 +204,21 @@ fn train_on_zeros_and_ones() {
     for (index, file) in zero_files.iter().enumerate() {
         // load one into memory
         let pixels = load_image(&file);
-        print_percent_complete(number_of_files, index);
+        // print_percent_complete(number_of_files, index);
+
+        let outputs = vec![vec![0.0; 1]];
 
         network.train(&pixels, &vec![vec![0.0]], 0.1);
     }
+
+    // println!("{:?}", network.neurons);
+    //copy network to file
+    let mut file = File::create("./network_after_training.txt").unwrap();
+    file.write_all(network.to_string().as_bytes()).unwrap();
+
+
     
-    // load file from  test set
+    // // load file from  test set
     let zero_test_files = get_files("./mnist_png/testing/0");
 
     for (index, file) in zero_test_files.iter().enumerate() {
@@ -190,7 +227,7 @@ fn train_on_zeros_and_ones() {
 
         let flattened = flatten(&pixels);
 
-        println!("{:?}",network.predict_2d(&pixels)); // should be a 0 ish so 0.99, 0.01
+        println!("{:?}",network.predict(&flattened));
     }
 
     let one_test_files = get_files("./mnist_png/testing/1");
@@ -201,7 +238,7 @@ fn train_on_zeros_and_ones() {
 
         let flattened = flatten(&pixels);
 
-        println!("{:?}",network.predict_2d(&pixels)); // should be a 0 ish so 0.99, 0.01
+        println!("{:?}",network.predict(&flattened));
     }
  
 
@@ -210,7 +247,7 @@ fn train_on_zeros_and_ones() {
 }
 
 fn just_one_file(){
-        let zero_files = get_files("./mnist_png/training/0");
+    let zero_files = get_files("./mnist_png/training/0");
     let just_one = zero_files[0].clone();
     println!("{} size of one image", just_one.len());
     let pixels = load_image(&just_one);
@@ -219,7 +256,7 @@ fn just_one_file(){
 
 fn train_simple_problem(){
  let mut network = Network::new(vec![
-        Neuron::new(vec![0.0, 0.0, 0.0], 0.0),
+        Neuron::new(vec![0.1, 0.1, 0.1], 0.0),
     ]);
 
     network.train(&vec![vec![0.0, 0.0, 0.0]], &vec![vec![0.0]], 0.1);
