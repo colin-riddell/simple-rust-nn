@@ -218,7 +218,7 @@ fn train_on_zeros_and_ones() {
 
 
     
-    // // load file from  test set
+    // load file from  test set
     let zero_test_files = get_files("./mnist_png/testing/0");
 
     for (index, file) in zero_test_files.iter().enumerate() {
