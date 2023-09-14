@@ -11,6 +11,24 @@ use crate::images::load_image;
 
 use crate::network::Network::Network;
 
+fn get_mnist_letter_training(letter: &str)-> Vec<String>{
+    let path = format!("./mnist_png/training/{}", letter);
+    return get_files(&path)
+}
+
+fn train_letter(network: &mut Network, letter: &str, output: &Vec<f64>) {
+    // get all files for 1's
+    let one_files = get_mnist_letter_training(letter);
+
+    one_files.iter()
+        .enumerate()
+        .for_each(|(index, file)| {
+            let inputs = load_image(file);
+            network.train(&inputs, &vec![output.to_vec()], 0.1, 50);
+        });
+
+}
+
 pub fn train_on_zeros_and_ones() {
     let mut initial_weights: Vec<f64> = vec![];
     for _ in 0..784 {
@@ -19,39 +37,13 @@ pub fn train_on_zeros_and_ones() {
 
     let mut network = Network::new(784, 10, 2);
 
+    let one_output = vec![0.0, 1.0];
+    train_letter(&mut network, "1", &one_output);
 
-    // get all files for 1's
-    let one_files = get_files("./mnist_png/training/1");
-    let number_of_files = one_files.len();
+    let zero_output = vec![1.0, 0.0];
+    train_letter(&mut network, "0", &zero_output);
 
-    one_files.iter()
-        .enumerate()
-        .for_each(|(index, file)| {
-            // print_percent_complete(number_of_files, index);
-            let inputs = load_image(file);
-            // println!("{:?}", inputs);
-            network.train(&inputs, &vec![vec![0.0,1.0]], 0.1, 50);
-        });
-
-
-    // get all files for 0's
-    let zero_files = get_files("./mnist_png/training/0");
-
-    // loop over all files
-    for (index, file) in zero_files.iter().enumerate() {
-        // load one into memory
-        let pixels = load_image(&file);
-        // print_percent_complete(number_of_files, index);
-
-        let outputs = vec![vec![0.0; 1]];
-
-        network.train(&pixels, &vec![vec![1.0, 0.0]], 0.1, 50);
-    }
-
-
-    //copy  trained network to file
-    // let mut file = File::create("./network_after_training.txt").unwrap();
-    // file.write_all(network.to_string().as_bytes()).unwrap();
+    // save trained neural network to JSON
     let mut file = File::create("./network_after_training.json").unwrap();
     file.write_all(network.to_string().as_bytes()).unwrap();
 
@@ -69,5 +61,9 @@ pub fn train_on_zeros_and_ones() {
     }
 
     let one_test_files = get_files("./mnist_png/testing/1");
+
+}
+
+pub fn test_all(){
 
 }
