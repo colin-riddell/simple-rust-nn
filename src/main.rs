@@ -16,5 +16,6 @@ fn main() {
     // train_simple_problem();
     let mut mnistModel = FullMnist::new();
     mnistModel.train();
-    // mnistModel.save();
+    mnistModel.save();
+    mnistModel.test_one("0");
 }

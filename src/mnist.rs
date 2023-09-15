@@ -16,7 +16,7 @@ pub trait TrainableCharacterModel {
     fn train_letter(&mut self, letter: &str);
     fn save(&mut self);
     // fn test_all();
-    // fn test_one(letter: &str);
+    fn test_one(&mut self, letter: &str);
     // fn test_single(path: &str);
 }
 
@@ -78,21 +78,21 @@ impl TrainableCharacterModel for FullMnist {
         file.write_all(self.network.to_string().as_bytes()).unwrap();
     }
 
-    // fn test_all_letter(&self, letter: &str){
+    fn test_one(&mut self, letter: &str){
 
-    //         // load file from  test set
-    //         let zero_test_files = get_mnist_letter_testing("0");
+            // load file from  test set
+            let zero_test_files = get_mnist_letter_testing(letter);
 
-    //         for (index, file) in zero_test_files.iter().enumerate() {
-    //             println!("Predicting file {}", file);
-    //             let pixels = load_image(&file);
+            for (index, file) in zero_test_files.iter().enumerate() {
+                println!("Predicting file {}", file);
+                let pixels = load_image(&file);
         
-    //             let flattened = flatten(&pixels);
+                let flattened = flatten(&pixels);
         
-    //             println!("{:?}",self.network.predict(&flattened));
-    //         }
+                println!("{:?}",self.network.predict(&flattened));
+            }
 
-    // }
+    }
 
 }
 
