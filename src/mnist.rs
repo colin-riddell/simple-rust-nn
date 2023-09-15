@@ -14,6 +14,7 @@ use crate::network::Network::Network;
 pub trait TrainableCharacterModel {
     fn train(&mut self);
     fn train_letter(&mut self, letter: &str);
+    fn save(&mut self);
     // fn test_all();
     // fn test_one(letter: &str);
     // fn test_single(path: &str);
@@ -66,15 +67,15 @@ impl TrainableCharacterModel for FullMnist {
         // let zero_output = vec![1.0, 0.0];
         self.train_letter("0");
 
-        // save trained neural network to JSON
-        let mut file = File::create("./network_after_training.json").unwrap();
-        file.write_all(self.network.to_string().as_bytes()).unwrap();
-
-        
-
 
         // let one_test_files = get_files("./mnist_png/testing/1");
 
+    }
+
+    fn save(&mut self){
+        // save trained neural network to JSON
+        let mut file = File::create("./mnist.json").unwrap();
+        file.write_all(self.network.to_string().as_bytes()).unwrap();
     }
 
     // fn test_all_letter(&self, letter: &str){
