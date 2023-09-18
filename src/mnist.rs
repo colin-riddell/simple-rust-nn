@@ -18,6 +18,7 @@ pub trait TrainableCharacterModel {
     // fn test_all();
     fn test_one(&mut self, letter: &str);
     // fn test_single(path: &str);
+    fn test_single(&mut self, location: &str);
 }
 
 // #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,7 +27,7 @@ pub struct FullMnist {
 }
 impl FullMnist {
     pub fn new() -> FullMnist {
-        let network = Network::new(784, 10, 36);
+        let network = Network::new(784, 100, 2);
         FullMnist { network }
     }  
 }
@@ -42,6 +43,7 @@ impl TrainableCharacterModel for FullMnist {
 
         if let Some(output) = encode_letter(letter) {
             println!("generating for {} output ", output.len());
+            println!("training for {} {:?}", letter, output);
             one_files.iter()
                 .enumerate()
                 .for_each(|(index, file)| {
@@ -89,17 +91,70 @@ impl TrainableCharacterModel for FullMnist {
         
                 let flattened = flatten(&pixels);
         
-                println!("{:?}",self.network.predict(&flattened));
+                // println!("{:?}",self.network.predict(&flattened));
+                let predicted_output: Vec<f64> =  self.network.predict(&flattened);
+                println!("{:?}", predicted_output);
+                println!("{}", decode_letter(&predicted_output).expect("should have only one prominent value in predicted_output vector."));
             }
+
+    }
+
+    fn test_single(&mut self, location: &str) {
+
+        // load file from  test set
+        // let zero_test_files = get_mnist_letter_testing(letter);
+
+        // let mut rng = rand::thread_rng();
+        // let random_index = rng.gen_range(0..zero_test_files.len());  // Generate a random index
+        // let random_test_file = &zero_test_files[random_index];  
+
+        println!("Predicting file {}", location);
+        let pixels = load_image(location);
+
+        let flattened = flatten(&pixels);
+
+        // println!("{:?}",self.network.predict(&flattened));
+        let predicted_output: Vec<f64> =  self.network.predict(&flattened);
+        println!("{:?}", predicted_output);
+        println!("{}", decode_letter(&predicted_output).expect("should have only one prominent value in predicted_output vector."));
+        
+
 
     }
 
 }
 
+fn decode_letter(vec: &Vec<f64>) -> Option<String> {
+    // Define the full range of characters from '0' to 'z'
+    // let full_range = "0123456789abcdefghijklmnopqrstuvwxyz";
+    let full_range = "01";
+
+    // Check for one and only one entry set to 1.0
+    let ones_count = vec.iter().filter(|&&x| x >= 0.8).count();
+    if ones_count != 1 {
+        return None;
+    }
+
+    // Find the index with the value of 1.0
+    if let Some(index) = vec.iter().position(|&x| x >= 0.8) {
+        // Check if the index is within the length of full_range
+        if index < full_range.len() {
+            Some(full_range.chars().nth(index).unwrap().to_string())
+        } else {
+            // Index out of bounds of the full_range
+            None
+        }
+    } else {
+        // No index found with value >0.8
+        None
+    }
+}
+
 fn encode_letter(c: &str) -> Option<Vec<f64>> {
     // Define the full range of characters from '0' to 'z'
-    let full_range = "0123456789abcdefghijklmnopqrstuvwxyz";
-    
+    // let full_range = "0123456789abcdefghijklmnopqrstuvwxyz";
+    let full_range = "01";
+
     // Initialize a vector with zeros
     let mut vec = vec![0.0; full_range.len()];
     

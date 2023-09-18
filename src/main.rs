@@ -17,5 +17,8 @@ fn main() {
     let mut mnistModel = FullMnist::new();
     mnistModel.train();
     mnistModel.save();
-    mnistModel.test_one("0");
+    mnistModel.test_one("1");
+    // mnistModel.test_single("./mnist_png/testing/0/3401.png");
+    // mnistModel.test_single("./mnist_png/testing/1/3852.png");
+
 }
