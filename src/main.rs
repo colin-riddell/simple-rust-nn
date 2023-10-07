@@ -14,13 +14,14 @@ use mnist::FullMnist;
 use simple_problem::train_simple_problem;
 
 fn main() {
-    mnist2::train_and_test();
     // train_simple_problem();
-    // let mut mnistModel = FullMnist::new();
+    let mut mnistModel = FullMnist::new();
     // mnistModel.train();
-    // mnistModel.save();
+    // mnistModel.save("./mnist.json");
+    mnistModel.load("./mnist.json");
     // mnistModel.test_one("1");
-    // mnistModel.test_single("./mnist_png/testing/0/3401.png");
-    // mnistModel.test_single("./mnist_png/testing/1/3852.png");
+    mnistModel.test_all();
+    mnistModel.test_single("./mnist_png/testing/0/3401.png");
+    mnistModel.test_single("./mnist_png/testing/1/3852.png");
 
 }
